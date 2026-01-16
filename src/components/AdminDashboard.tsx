@@ -99,7 +99,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const pendingCount = accessRequests?.filter(r => r.status === "PENDING").length ?? 0;
+  const pendingCount = accessRequests?.filter((r: AccessRequest) => r.status === "PENDING").length ?? 0;
 
   return (
     <div className="admin-dashboard">

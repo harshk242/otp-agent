@@ -1,5 +1,6 @@
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { Doc } from "../../convex/_generated/dataModel";
 
 interface TriageJobsListProps {
   selectedJobId: string | null;
@@ -41,7 +42,7 @@ export default function TriageJobsList({
 
   return (
     <div className="job-list">
-      {jobs.map((job) => (
+      {jobs.map((job: Doc<"triageJobs">) => (
         <div
           key={job._id}
           className={`job-item ${selectedJobId === job._id ? "selected" : ""}`}

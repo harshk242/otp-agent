@@ -13,7 +13,6 @@ import {
   AssociationScore,
   Tractability,
   SafetySignal,
-  SafetySeverity,
   CompetitorLandscape,
   TargetScores,
   SCORE_WEIGHTS,

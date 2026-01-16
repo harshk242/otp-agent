@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Id } from "../../convex/_generated/dataModel";
+import { Id, Doc } from "../../convex/_generated/dataModel";
 import TargetReportDetail from "./TargetReportDetail";
 
 interface TriageResultsProps {
@@ -63,7 +63,7 @@ export default function TriageResults({ jobId }: TriageResultsProps) {
   const filteredReports =
     filterVerdict === "ALL"
       ? targetReports
-      : targetReports.filter((r) => r.verdict === filterVerdict);
+      : targetReports.filter((r: Doc<"targetReports">) => r.verdict === filterVerdict);
 
   // Sort by composite score (descending)
   const sortedReports = [...filteredReports].sort(
@@ -72,7 +72,7 @@ export default function TriageResults({ jobId }: TriageResultsProps) {
 
   // If viewing a specific report
   if (selectedReportId) {
-    const report = targetReports.find((r) => r._id === selectedReportId);
+    const report = targetReports.find((r: Doc<"targetReports">) => r._id === selectedReportId);
     if (report) {
       return (
         <div>

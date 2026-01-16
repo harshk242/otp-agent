@@ -323,7 +323,18 @@ export const triageTarget = action({
     diseaseId: v.string(),
     diseaseName: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{
+    reportId: Id<"targetReports">;
+    targetInfo: TargetInfo;
+    associationScore: AssociationScore | null;
+    tractability: Tractability | null;
+    safetySignals: SafetySignal[];
+    competitorLandscape: CompetitorLandscape | null;
+    knownDrugs: KnownDrug[];
+    scores: TargetScores;
+    verdict: Verdict;
+    recommendations: string[];
+  }> => {
     const result = await triageSingleTarget(
       { symbol: args.geneSymbol, ensemblId: args.ensemblId },
       args.diseaseId,
@@ -335,7 +346,7 @@ export const triageTarget = action({
     }
 
     // Save the report
-    const reportId = await ctx.runMutation(api.triage.saveTargetReport, {
+    const reportId: Id<"targetReports"> = await ctx.runMutation(api.triage.saveTargetReport, {
       targetInfo: result.targetInfo,
       diseaseId: args.diseaseId,
       diseaseName: args.diseaseName,
@@ -364,7 +375,7 @@ export const getSafetyProfile = action({
     geneSymbol: v.string(),
     ensemblId: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
+  handler: async (_ctx, args) => {
     let ensemblId = args.ensemblId;
     if (!ensemblId) {
       const resolved = await resolveGeneToEnsembl(args.geneSymbol);
@@ -387,7 +398,7 @@ export const analyzeCompetitors = action({
     diseaseId: v.string(),
     diseaseName: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (_ctx, args) => {
     return await competitorAnalyzer.analyzeLandscape(
       args.geneSymbol,
       args.diseaseId,
@@ -403,7 +414,7 @@ export const searchTarget = action({
   args: {
     geneSymbol: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (_ctx, args) => {
     const result = await otpClient.searchTarget(args.geneSymbol);
     if (!result) {
       return null;
@@ -421,7 +432,7 @@ export const searchDisease = action({
   args: {
     query: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (_ctx, args) => {
     return await otpClient.searchDisease(args.query);
   },
 });
@@ -433,7 +444,7 @@ export const getTargetInfo = action({
   args: {
     ensemblId: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (_ctx, args) => {
     return await otpClient.getTargetInfo(args.ensemblId);
   },
 });
@@ -446,7 +457,7 @@ export const getAssociationScore = action({
     ensemblId: v.string(),
     diseaseId: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (_ctx, args) => {
     return await otpClient.getAssociationScore(args.ensemblId, args.diseaseId);
   },
 });
@@ -458,7 +469,7 @@ export const getTractability = action({
   args: {
     ensemblId: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (_ctx, args) => {
     return await otpClient.getTractability(args.ensemblId);
   },
 });
@@ -470,7 +481,7 @@ export const getKnownDrugs = action({
   args: {
     ensemblId: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (_ctx, args) => {
     return await otpClient.getKnownDrugs(args.ensemblId);
   },
 });

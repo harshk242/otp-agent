@@ -310,7 +310,7 @@ export const safetyInvestigator = {
    * Investigate specific organ system toxicity
    */
   async investigateOrganToxicity(
-    ensemblId: string,
+    _ensemblId: string,
     geneSymbol: string,
     organSystem: string
   ): Promise<SafetySignal> {

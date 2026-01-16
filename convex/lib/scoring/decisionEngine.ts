@@ -13,10 +13,7 @@ import {
   Verdict,
   TargetScores,
   SafetySignal,
-  SafetySeverity,
   CompetitorLandscape,
-  Tractability,
-  AssociationScore,
 } from "../types";
 
 /**

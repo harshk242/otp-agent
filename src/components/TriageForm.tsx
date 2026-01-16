@@ -48,7 +48,7 @@ export default function TriageForm({ onTriageComplete }: TriageFormProps) {
   const [genesText, setGenesText] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [currentGene, setCurrentGene] = useState("");
+  const [currentGene] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const runTriage = useAction(api.agent.runTriage);
