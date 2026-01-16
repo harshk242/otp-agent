@@ -1,0 +1,37 @@
+{
+  "name": "otp-agent",
+  "version": "1.0.0",
+  "description": "OpenTargets AI Agent - TypeScript Convex Backend",
+  "type": "module",
+  "scripts": {
+    "dev": "convex dev",
+    "dev:frontend": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "convex:deploy": "convex deploy",
+    "lint": "eslint src convex --ext .ts,.tsx",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "convex": "^1.17.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "zod": "^3.23.0",
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^4.2.0",
+    "typescript": "^5.3.0",
+    "vite": "^5.0.0",
+    "vitest": "^1.0.0",
+    "eslint": "^8.55.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
