@@ -7,6 +7,53 @@ import { DEFAULT_CONFIG, SafetyEvidence, PubMedArticle } from "../types";
 
 const PUBMED_BASE_URL = DEFAULT_CONFIG.pubmedApiUrl;
 
+// Rate limiting configuration
+// PubMed allows 3 req/sec without API key, 10 req/sec with API key
+const RATE_LIMIT_DELAY_MS = 100; // ~10 requests per second with API key
+const MAX_RETRIES = 3;
+const INITIAL_RETRY_DELAY_MS = 1000;
+
+// Simple rate limiter using a queue
+let lastRequestTime = 0;
+const requestQueue: Array<() => void> = [];
+let isProcessingQueue = false;
+
+async function waitForRateLimit(): Promise<void> {
+  return new Promise((resolve) => {
+    requestQueue.push(resolve);
+    processQueue();
+  });
+}
+
+function processQueue(): void {
+  if (isProcessingQueue || requestQueue.length === 0) return;
+
+  isProcessingQueue = true;
+
+  const now = Date.now();
+  const timeSinceLastRequest = now - lastRequestTime;
+  const delay = Math.max(0, RATE_LIMIT_DELAY_MS - timeSinceLastRequest);
+
+  setTimeout(() => {
+    lastRequestTime = Date.now();
+    const resolve = requestQueue.shift();
+    isProcessingQueue = false;
+
+    if (resolve) {
+      resolve();
+    }
+
+    // Process next item in queue
+    if (requestQueue.length > 0) {
+      processQueue();
+    }
+  }, delay);
+}
+
+async function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 interface ESearchResult {
   esearchresult: {
     idlist: string[];
@@ -37,7 +84,7 @@ interface EFetchResult {
   >;
 }
 
-// Helper function for HTTP requests
+// Helper function for HTTP requests with rate limiting and retry
 async function fetchPubMed<T>(
   endpoint: string,
   params: Record<string, string | number>
@@ -53,23 +100,49 @@ async function fetchPubMed<T>(
     url.searchParams.set("api_key", apiKey);
   }
 
-  try {
-    const response = await fetch(url.toString(), {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-      },
-    });
+  let lastError: Error | null = null;
 
-    if (!response.ok) {
-      throw new Error(`PubMed request failed: ${response.status} ${response.statusText}`);
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    // Wait for rate limit slot
+    await waitForRateLimit();
+
+    try {
+      const response = await fetch(url.toString(), {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      if (response.status === 429) {
+        // Rate limited - exponential backoff
+        const retryDelay = INITIAL_RETRY_DELAY_MS * Math.pow(2, attempt);
+        console.warn(
+          `PubMed rate limited (attempt ${attempt + 1}/${MAX_RETRIES}), waiting ${retryDelay}ms...`
+        );
+        await sleep(retryDelay);
+        continue;
+      }
+
+      if (!response.ok) {
+        throw new Error(`PubMed request failed: ${response.status} ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      lastError = error as Error;
+      if (attempt < MAX_RETRIES - 1) {
+        const retryDelay = INITIAL_RETRY_DELAY_MS * Math.pow(2, attempt);
+        console.warn(
+          `PubMed request error (attempt ${attempt + 1}/${MAX_RETRIES}): ${lastError.message}, retrying in ${retryDelay}ms...`
+        );
+        await sleep(retryDelay);
+      }
     }
-
-    return await response.json();
-  } catch (error) {
-    console.error(`PubMed API error for ${endpoint}:`, error);
-    return null;
   }
+
+  console.error(`PubMed API error for ${endpoint} after ${MAX_RETRIES} retries:`, lastError);
+  return null;
 }
 
 export const pubmedClient = {
