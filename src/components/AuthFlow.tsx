@@ -58,12 +58,15 @@ function SignInSignUp() {
     setLoading(true);
 
     try {
-      await signIn("password", {
+      const signInData: Record<string, string> = {
         email,
         password,
-        name: mode === "signUp" ? name : undefined,
         flow: mode,
-      });
+      };
+      if (mode === "signUp") {
+        signInData.name = name;
+      }
+      await signIn("password", signInData);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Authentication failed";
       setError(errorMessage);
