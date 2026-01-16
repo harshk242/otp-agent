@@ -1,13 +1,24 @@
 import { useState } from "react";
-import { useQuery, useMutation, useAction } from "convex/react";
+import { useQuery } from "convex/react";
+import { useUser, UserButton } from "@clerk/clerk-react";
 import { api } from "../convex/_generated/api";
+import { AuthFlow } from "./components/AuthFlow";
 import TriageForm from "./components/TriageForm";
 import TriageResults from "./components/TriageResults";
 import TriageJobsList from "./components/TriageJobsList";
+import AdminDashboard from "./components/AdminDashboard";
 
-function App() {
-  const [activeTab, setActiveTab] = useState<"new" | "history">("new");
+function AppContent() {
+  const { user: clerkUser } = useUser();
+  const [activeTab, setActiveTab] = useState<"new" | "history" | "admin">("new");
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+
+  const currentUser = useQuery(
+    api.auth.getCurrentUser,
+    clerkUser?.id ? { tokenIdentifier: `clerk|${clerkUser.id}` } : "skip"
+  );
+
+  const isAdmin = currentUser?.isAdmin ?? false;
 
   return (
     <div className="app">
@@ -15,6 +26,10 @@ function App() {
         <div className="header-content">
           <h1>🎯 OpenTargets Agent</h1>
           <p>AI-Powered Drug Target Triage Platform</p>
+        </div>
+        <div className="header-user">
+          {isAdmin && <span className="admin-indicator">👑 Admin</span>}
+          <UserButton afterSignOutUrl="/" />
         </div>
       </header>
 
@@ -31,6 +46,14 @@ function App() {
         >
           History
         </button>
+        {isAdmin && (
+          <button
+            className={`nav-button admin-nav ${activeTab === "admin" ? "active" : ""}`}
+            onClick={() => setActiveTab("admin")}
+          >
+            👑 Admin
+          </button>
+        )}
       </nav>
 
       <main className="main">
@@ -63,6 +86,8 @@ function App() {
             </div>
           </div>
         )}
+
+        {activeTab === "admin" && isAdmin && <AdminDashboard />}
       </main>
 
       <footer className="footer">
@@ -72,6 +97,14 @@ function App() {
         </p>
       </footer>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthFlow>
+      <AppContent />
+    </AuthFlow>
   );
 }
 

@@ -172,6 +172,13 @@ export const reportSummaryValidator = v.object({
   topTargets: v.array(v.string()),
 });
 
+// Access request status validator
+export const accessRequestStatusValidator = v.union(
+  v.literal("PENDING"),
+  v.literal("APPROVED"),
+  v.literal("REJECTED")
+);
+
 // Schema definition
 export default defineSchema({
   // Users table
@@ -180,9 +187,29 @@ export default defineSchema({
     email: v.string(),
     imageUrl: v.optional(v.string()),
     tokenIdentifier: v.string(),
+    isApproved: v.boolean(),
+    isAdmin: v.boolean(),
     createdAt: v.number(),
   })
     .index("by_token", ["tokenIdentifier"])
+    .index("by_email", ["email"])
+    .index("by_approved", ["isApproved"]),
+
+  // Access requests for early access
+  accessRequests: defineTable({
+    userId: v.id("users"),
+    email: v.string(),
+    name: v.string(),
+    reason: v.optional(v.string()),
+    organization: v.optional(v.string()),
+    status: accessRequestStatusValidator,
+    reviewedBy: v.optional(v.id("users")),
+    reviewedAt: v.optional(v.number()),
+    reviewNote: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_status", ["status"])
     .index("by_email", ["email"]),
 
   // Gene lists for triage
