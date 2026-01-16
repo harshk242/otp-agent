@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "convex dev",
     "dev:frontend": "vite",
-    "build": "tsc && vite build",
+    "build": "convex codegen && tsc && vite build",
     "preview": "vite preview",
     "convex:deploy": "convex deploy",
     "lint": "eslint src convex --ext .ts,.tsx",
