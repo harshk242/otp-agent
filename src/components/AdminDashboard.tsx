@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
-import { useUser } from "@clerk/clerk-react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 
@@ -21,36 +20,31 @@ interface AccessRequest {
 
 interface User {
   _id: Id<"users">;
-  name: string;
-  email: string;
-  isApproved: boolean;
-  isAdmin: boolean;
-  createdAt: number;
+  name?: string;
+  email?: string;
+  isApproved?: boolean;
+  isAdmin?: boolean;
 }
 
 export default function AdminDashboard() {
-  const { user: clerkUser } = useUser();
   const [activeTab, setActiveTab] = useState<"requests" | "users">("requests");
   const [statusFilter, setStatusFilter] = useState<RequestStatus | "ALL">("PENDING");
   const [reviewNote, setReviewNote] = useState("");
   const [selectedRequest, setSelectedRequest] = useState<Id<"accessRequests"> | null>(null);
 
-  const currentUser = useQuery(
-    api.auth.getCurrentUser,
-    clerkUser?.id ? { tokenIdentifier: `clerk|${clerkUser.id}` } : "skip"
-  );
+  const currentUser = useQuery(api.users.currentUser);
 
   const accessRequests = useQuery(
-    api.auth.listAccessRequests,
-    statusFilter === "ALL" ? {} : { status: statusFilter as RequestStatus }
+    api.users.listAccessRequests,
+    { status: statusFilter === "ALL" ? undefined : statusFilter }
   );
 
-  const allUsers = useQuery(api.auth.listUsers, {});
+  const allUsers = useQuery(api.users.listUsers, {});
 
-  const approveRequest = useMutation(api.auth.approveAccessRequest);
-  const rejectRequest = useMutation(api.auth.rejectAccessRequest);
-  const revokeAccess = useMutation(api.auth.revokeAccess);
-  const makeAdmin = useMutation(api.auth.makeAdmin);
+  const approveRequest = useMutation(api.users.approveAccessRequest);
+  const rejectRequest = useMutation(api.users.rejectAccessRequest);
+  const revokeAccess = useMutation(api.users.revokeAccess);
+  const makeAdmin = useMutation(api.users.makeAdmin);
 
   if (!currentUser?.isAdmin) {
     return (
@@ -64,8 +58,7 @@ export default function AdminDashboard() {
   const handleApprove = async (requestId: Id<"accessRequests">) => {
     await approveRequest({
       requestId,
-      adminUserId: currentUser._id,
-      note: reviewNote || undefined,
+      reviewNote: reviewNote || undefined,
     });
     setReviewNote("");
     setSelectedRequest(null);
@@ -74,8 +67,7 @@ export default function AdminDashboard() {
   const handleReject = async (requestId: Id<"accessRequests">) => {
     await rejectRequest({
       requestId,
-      adminUserId: currentUser._id,
-      note: reviewNote || undefined,
+      reviewNote: reviewNote || undefined,
     });
     setReviewNote("");
     setSelectedRequest(null);
@@ -85,7 +77,6 @@ export default function AdminDashboard() {
     if (confirm("Are you sure you want to revoke this user's access?")) {
       await revokeAccess({
         targetUserId: userId,
-        adminUserId: currentUser._id,
       });
     }
   };
@@ -94,7 +85,6 @@ export default function AdminDashboard() {
     if (confirm("Are you sure you want to make this user an admin?")) {
       await makeAdmin({
         targetUserId: userId,
-        adminUserId: currentUser._id,
       });
     }
   };
@@ -254,15 +244,14 @@ export default function AdminDashboard() {
                     <th>Email</th>
                     <th>Status</th>
                     <th>Role</th>
-                    <th>Joined</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {allUsers.map((user: User) => (
                     <tr key={user._id}>
-                      <td>{user.name}</td>
-                      <td>{user.email}</td>
+                      <td>{user.name || "—"}</td>
+                      <td>{user.email || "—"}</td>
                       <td>
                         <span
                           className={`status-badge ${user.isApproved ? "approved" : "pending"}`}
@@ -277,7 +266,6 @@ export default function AdminDashboard() {
                           <span className="role-badge user">User</span>
                         )}
                       </td>
-                      <td>{new Date(user.createdAt).toLocaleDateString()}</td>
                       <td className="action-cell">
                         {user._id !== currentUser._id && (
                           <>

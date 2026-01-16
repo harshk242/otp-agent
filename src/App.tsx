@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "convex/react";
-import { useUser, UserButton } from "@clerk/clerk-react";
+import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "../convex/_generated/api";
 import { AuthFlow } from "./components/AuthFlow";
 import TriageForm from "./components/TriageForm";
@@ -9,14 +9,11 @@ import TriageJobsList from "./components/TriageJobsList";
 import AdminDashboard from "./components/AdminDashboard";
 
 function AppContent() {
-  const { user: clerkUser } = useUser();
   const [activeTab, setActiveTab] = useState<"new" | "history" | "admin">("new");
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const { signOut } = useAuthActions();
 
-  const currentUser = useQuery(
-    api.auth.getCurrentUser,
-    clerkUser?.id ? { tokenIdentifier: `clerk|${clerkUser.id}` } : "skip"
-  );
+  const currentUser = useQuery(api.users.currentUser);
 
   const isAdmin = currentUser?.isAdmin ?? false;
 
@@ -29,7 +26,10 @@ function AppContent() {
         </div>
         <div className="header-user">
           {isAdmin && <span className="admin-indicator">👑 Admin</span>}
-          <UserButton afterSignOutUrl="/" />
+          <span className="user-name">{currentUser?.name || currentUser?.email}</span>
+          <button className="btn btn-secondary" onClick={() => signOut()}>
+            Sign out
+          </button>
         </div>
       </header>
 

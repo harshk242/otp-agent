@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { authTables } from "@convex-dev/auth/server";
 
 // Define all enums as validators
 export const verdictValidator = v.union(
@@ -181,19 +182,25 @@ export const accessRequestStatusValidator = v.union(
 
 // Schema definition
 export default defineSchema({
-  // Users table
+  ...authTables,
+
+  // Extend the users table with custom fields
   users: defineTable({
-    name: v.string(),
-    email: v.string(),
+    // Convex Auth fields
+    name: v.optional(v.string()),
+    email: v.optional(v.string()),
+    image: v.optional(v.string()),
+    emailVerificationTime: v.optional(v.number()),
+    // Custom fields for access control
+    isApproved: v.optional(v.boolean()),
+    isAdmin: v.optional(v.boolean()),
+    // Legacy fields from Clerk (for backward compatibility with existing data)
+    createdAt: v.optional(v.number()),
     imageUrl: v.optional(v.string()),
-    tokenIdentifier: v.string(),
-    isApproved: v.boolean(),
-    isAdmin: v.boolean(),
-    createdAt: v.number(),
+    tokenIdentifier: v.optional(v.string()),
   })
-    .index("by_token", ["tokenIdentifier"])
-    .index("by_email", ["email"])
-    .index("by_approved", ["isApproved"]),
+    .index("email", ["email"])
+    .index("by_token", ["tokenIdentifier"]),
 
   // Access requests for early access
   accessRequests: defineTable({

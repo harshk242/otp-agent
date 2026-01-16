@@ -560,20 +560,18 @@ body {
 }
 
 .auth-card {
-  background: transparent;
+  background: var(--surface);
   border-radius: 16px;
-  padding: 0;
+  padding: 2rem;
   max-width: 420px;
   width: 100%;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
-.auth-card.loading-card,
 .auth-card.pending-card,
 .auth-card.rejected-card,
 .auth-card.request-card {
-  background: var(--surface);
-  padding: 2rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  max-width: 500px;
 }
 
 .auth-card.loading-card {
@@ -584,21 +582,11 @@ body {
   padding: 3rem;
 }
 
-.auth-card.pending-card,
-.auth-card.rejected-card,
-.auth-card.request-card {
-  max-width: 500px;
-}
-
 /* Auth switch for sign-in/sign-up toggle */
-.auth-card > .auth-switch {
-  background: var(--surface);
-  border-radius: 0 0 16px 16px;
-  padding: 1rem 2rem 1.5rem;
-  text-align: center;
-  box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.4);
-  position: relative;
-  z-index: 1;
+.auth-card .auth-switch {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
 }
 
 .pending-icon,
@@ -695,43 +683,20 @@ body {
   font-size: 0.875rem;
 }
 
-/* Clerk styling overrides */
-.clerk-root {
-  width: 100%;
+/* Error message styling */
+.error-message {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 0.75rem 1rem;
+  border-radius: var(--border-radius);
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
 }
 
-.clerk-card {
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
-  border: none !important;
-  border-radius: 16px 16px 0 0 !important;
-}
-
-/* Hide Clerk's default footer since we have custom auth-switch */
-.cl-footerAction {
-  display: none !important;
-}
-
-/* Clerk card container - main card element */
-.cl-card,
-.cl-signIn-root .cl-card,
-.cl-signUp-root .cl-card {
-  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.4) !important;
-  border-radius: 16px 16px 0 0 !important;
-  border: none !important;
-}
-
-.cl-rootBox {
-  width: 100%;
-}
-
-/* Ensure internal elements don't have unwanted shadows */
-.cl-cardBox {
-  box-shadow: none !important;
-}
-
-/* Hide Clerk footer links */
-.cl-footer {
-  display: none !important;
+/* User name in header */
+.user-name {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.875rem;
 }
 
 /* Header with user button */
