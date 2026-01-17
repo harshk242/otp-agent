@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { authTables } from "@convex-dev/auth/server";
 
 // Define all enums as validators
 export const verdictValidator = v.union(
@@ -174,16 +175,8 @@ export const reportSummaryValidator = v.object({
 
 // Schema definition
 export default defineSchema({
-  // Users table
-  users: defineTable({
-    name: v.string(),
-    email: v.string(),
-    imageUrl: v.optional(v.string()),
-    tokenIdentifier: v.string(),
-    createdAt: v.number(),
-  })
-    .index("by_token", ["tokenIdentifier"])
-    .index("by_email", ["email"]),
+  // Auth tables (users, sessions, accounts, etc.)
+  ...authTables,
 
   // Gene lists for triage
   geneLists: defineTable({

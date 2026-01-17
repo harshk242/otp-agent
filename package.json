@@ -13,11 +13,13 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@auth/core": "0.37.4",
+    "@convex-dev/auth": "^0.0.90",
+    "axios": "^1.6.0",
     "convex": "^1.17.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "zod": "^3.23.0",
-    "axios": "^1.6.0"
+    "zod": "^3.23.0"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

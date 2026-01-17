@@ -1,21 +1,79 @@
-import { useState } from "react";
-import { useQuery, useMutation, useAction } from "convex/react";
-import { api } from "../convex/_generated/api";
+import { useState, useEffect } from "react";
+import { useAuthActions, useAuthToken } from "@convex-dev/auth/react";
 import TriageForm from "./components/TriageForm";
 import TriageResults from "./components/TriageResults";
 import TriageJobsList from "./components/TriageJobsList";
+import SignInForm from "./components/SignInForm";
 
 function App() {
+  const { signOut } = useAuthActions();
+  const token = useAuthToken();
   const [activeTab, setActiveTab] = useState<"new" | "history">("new");
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Check auth state on mount and when token changes
+  useEffect(() => {
+    // Give a small delay for the token to be loaded from storage
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Update loading state when token changes
+  useEffect(() => {
+    if (token !== undefined) {
+      setIsLoading(false);
+    }
+  }, [token]);
+
+  const isAuthenticated = token !== null;
+
+  console.log("Auth state:", { isAuthenticated, isLoading, token: token ? "present" : "null" });
+
+  if (isLoading) {
+    return (
+      <div className="app">
+        <div className="loading-container">
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="app">
+        <header className="header">
+          <div className="header-content">
+            <h1>OpenTargets Agent</h1>
+            <p>AI-Powered Drug Target Triage Platform</p>
+          </div>
+        </header>
+        <main className="main">
+          <SignInForm />
+        </main>
+        <footer className="footer">
+          <p>
+            Built with Convex + React | Data from Open Targets Platform, ChEMBL,
+            PubMed, and ClinicalTrials.gov
+          </p>
+        </footer>
+      </div>
+    );
+  }
 
   return (
     <div className="app">
       <header className="header">
         <div className="header-content">
-          <h1>🎯 OpenTargets Agent</h1>
+          <h1>OpenTargets Agent</h1>
           <p>AI-Powered Drug Target Triage Platform</p>
         </div>
+        <button className="sign-out-button" onClick={() => signOut()}>
+          Sign Out
+        </button>
       </header>
 
       <nav className="nav">
