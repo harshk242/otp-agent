@@ -10,7 +10,7 @@ export const { auth, signIn, signOut, store } = convexAuth({
       profile(params) {
         return {
           email: params.email as string,
-          name: params.name as string | undefined,
+          ...(params.name !== undefined && { name: params.name as string }),
         };
       },
     }),
