@@ -184,7 +184,7 @@ export const accessRequestStatusValidator = v.union(
 export default defineSchema({
   ...authTables,
 
-  // Extend the users table with custom fields
+  // Extend the users table with custom fields for Convex Auth
   users: defineTable({
     // Convex Auth fields
     name: v.optional(v.string()),
@@ -194,13 +194,7 @@ export default defineSchema({
     // Custom fields for access control
     isApproved: v.optional(v.boolean()),
     isAdmin: v.optional(v.boolean()),
-    // Legacy fields from Clerk (for backward compatibility with existing data)
-    createdAt: v.optional(v.number()),
-    imageUrl: v.optional(v.string()),
-    tokenIdentifier: v.optional(v.string()),
-  })
-    .index("email", ["email"])
-    .index("by_token", ["tokenIdentifier"]),
+  }).index("email", ["email"]),
 
   // Access requests for early access
   accessRequests: defineTable({

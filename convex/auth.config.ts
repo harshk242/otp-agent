@@ -1,8 +1,5 @@
+// Convex Auth configuration
+// For Password-based auth only, no external providers needed
 export default {
-  providers: [
-    {
-      domain: process.env.CONVEX_SITE_URL,
-      applicationID: "convex",
-    },
-  ],
+  providers: [],
 };
