@@ -15,13 +15,9 @@ export default function SignInForm() {
     const formData = new FormData(e.currentTarget);
     formData.set("flow", flow);
 
-    console.log("Submitting auth form:", { flow, email: formData.get("email") });
-
     try {
-      const result = await signIn("password", formData);
-      console.log("SignIn result:", result);
+      await signIn("password", formData);
     } catch (err) {
-      console.error("SignIn error:", err);
       setError(
         err instanceof Error
           ? err.message

@@ -30,8 +30,6 @@ function App() {
 
   const isAuthenticated = token !== null;
 
-  console.log("Auth state:", { isAuthenticated, isLoading, token: token ? "present" : "null" });
-
   if (isLoading) {
     return (
       <div className="app">
