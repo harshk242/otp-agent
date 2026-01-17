@@ -1,6 +1,12 @@
 # Dependencies
 node_modules/
 
+# Lock files
+bun.lock
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
 # Build output
 dist/
 
