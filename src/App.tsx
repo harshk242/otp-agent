@@ -12,23 +12,14 @@ function App() {
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check auth state on mount and when token changes
-  useEffect(() => {
-    // Give a small delay for the token to be loaded from storage
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 100);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Update loading state when token changes
+  // Update loading state when token resolves
   useEffect(() => {
     if (token !== undefined) {
       setIsLoading(false);
     }
   }, [token]);
 
-  const isAuthenticated = token !== null;
+  const isAuthenticated = typeof token === "string";
 
   if (isLoading) {
     return (
