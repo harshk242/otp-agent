@@ -67,14 +67,14 @@ export default function SignInForm() {
           {flow === "signIn" ? (
             <p>
               Don't have an account?{" "}
-              <button type="button" onClick={() => setFlow("signUp")}>
+              <button type="button" onClick={() => { setFlow("signUp"); setError(null); }}>
                 Sign Up
               </button>
             </p>
           ) : (
             <p>
               Already have an account?{" "}
-              <button type="button" onClick={() => setFlow("signIn")}>
+              <button type="button" onClick={() => { setFlow("signIn"); setError(null); }}>
                 Sign In
               </button>
             </p>
