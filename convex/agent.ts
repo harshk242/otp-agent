@@ -427,6 +427,18 @@ export const searchDisease = action({
 });
 
 /**
+ * Search for multiple diseases (returns list of matches)
+ */
+export const searchDiseases = action({
+  args: {
+    query: v.string(),
+  },
+  handler: async (ctx, args) => {
+    return await otpClient.searchDiseases(args.query);
+  },
+});
+
+/**
  * Get target info by Ensembl ID
  */
 export const getTargetInfo = action({

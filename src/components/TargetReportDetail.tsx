@@ -193,8 +193,11 @@ export default function TargetReportDetail({ report }: TargetReportDetailProps) 
       {report.associationScore && (
         <div className="card" style={{ marginTop: "1rem" }}>
           <h3 style={{ marginBottom: "1rem" }}>Disease Association</h3>
-          <p style={{ marginBottom: "1rem" }}>
+          <p style={{ marginBottom: "0.5rem" }}>
             <strong>Disease:</strong> {report.diseaseName}
+          </p>
+          <p style={{ marginBottom: "1rem", fontSize: "0.875rem", color: "#64748b" }}>
+            <strong>Disease ID:</strong> {report.diseaseId}
           </p>
           <div className="score-grid">
             <div className="score-item">

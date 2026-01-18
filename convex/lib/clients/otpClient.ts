@@ -520,6 +520,33 @@ export const otpClient = {
   },
 
   /**
+   * Search for multiple diseases (returns all disease hits)
+   */
+  async searchDiseases(
+    query: string
+  ): Promise<Array<{ id: string; name: string; description: string }>> {
+    const data = await fetchGraphQL<{
+      search: {
+        hits: Array<{
+          id: string;
+          entity: string;
+          name: string;
+          description: string;
+        }>;
+      };
+    }>(SEARCH_DISEASE_QUERY, { queryString: query });
+
+    // Filter and return all disease hits
+    return data.search.hits
+      .filter((h) => h.entity === "disease")
+      .map((h) => ({
+        id: h.id,
+        name: h.name,
+        description: h.description,
+      }));
+  },
+
+  /**
    * Get disease information
    */
   async getDiseaseInfo(

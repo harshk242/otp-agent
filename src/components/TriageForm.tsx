@@ -6,6 +6,12 @@ interface TriageFormProps {
   onTriageComplete: (jobId: string) => void;
 }
 
+interface DiseaseOption {
+  id: string;
+  name: string;
+  description: string;
+}
+
 // Preset gene lists for common diseases
 const PRESETS = {
   NASH: {
@@ -31,7 +37,7 @@ const PRESETS = {
     ],
   },
   Alzheimers: {
-    diseaseId: "EFO_0000249",
+    diseaseId: "EFO_0006514",
     diseaseName: "Alzheimer's disease",
     genes: ["APP", "PSEN1", "PSEN2", "APOE", "TREM2", "CLU", "BIN1", "CD33"],
   },
@@ -43,46 +49,69 @@ const PRESETS = {
 };
 
 export default function TriageForm({ onTriageComplete }: TriageFormProps) {
-  const [diseaseId, setDiseaseId] = useState("");
-  const [diseaseName, setDiseaseName] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [diseaseOptions, setDiseaseOptions] = useState<DiseaseOption[]>([]);
+  const [selectedDisease, setSelectedDisease] = useState<DiseaseOption | null>(null);
   const [genesText, setGenesText] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [currentGene, setCurrentGene] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const runTriage = useAction(api.agent.runTriage);
-  const searchDisease = useAction(api.agent.searchDisease);
+  const searchDiseases = useAction(api.agent.searchDiseases);
 
   const handlePresetSelect = (presetKey: keyof typeof PRESETS) => {
     const preset = PRESETS[presetKey];
-    setDiseaseId(preset.diseaseId);
-    setDiseaseName(preset.diseaseName);
+    setSelectedDisease({
+      id: preset.diseaseId,
+      name: preset.diseaseName,
+      description: "",
+    });
     setGenesText(preset.genes.join("\n"));
+    setDiseaseOptions([]);
+    setSearchQuery("");
   };
 
   const handleDiseaseSearch = async () => {
-    if (!diseaseName.trim()) return;
+    if (!searchQuery.trim()) return;
+
+    setIsSearching(true);
+    setError(null);
+    setDiseaseOptions([]);
+    setSelectedDisease(null);
 
     try {
-      const result = await searchDisease({ query: diseaseName });
-      if (result) {
-        setDiseaseId(result.id);
-        setDiseaseName(result.name);
+      const results = await searchDiseases({ query: searchQuery });
+      if (results && results.length > 0) {
+        setDiseaseOptions(results);
       } else {
-        setError("Disease not found. Please check the name.");
+        setError("No diseases found. Please try a different search term.");
       }
     } catch (err) {
-      setError("Error searching for disease.");
+      setError("Error searching for diseases.");
+    } finally {
+      setIsSearching(false);
     }
+  };
+
+  const handleDiseaseSelect = (disease: DiseaseOption) => {
+    setSelectedDisease(disease);
+    setDiseaseOptions([]);
+  };
+
+  const handleResetDisease = () => {
+    setSelectedDisease(null);
+    setSearchQuery("");
+    setDiseaseOptions([]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (!diseaseId || !diseaseName || !genesText.trim()) {
-      setError("Please fill in all fields.");
+    if (!selectedDisease || !genesText.trim()) {
+      setError("Please select a disease and enter target genes.");
       return;
     }
 
@@ -103,8 +132,8 @@ export default function TriageForm({ onTriageComplete }: TriageFormProps) {
     try {
       const result = await runTriage({
         genes,
-        diseaseId,
-        diseaseName,
+        diseaseId: selectedDisease.id,
+        diseaseName: selectedDisease.name,
       });
 
       onTriageComplete(result.jobId);
@@ -116,7 +145,7 @@ export default function TriageForm({ onTriageComplete }: TriageFormProps) {
   };
 
   return (
-    <div className="card" style={{ maxWidth: "800px", margin: "0 auto" }}>
+    <div className="card" style={{ maxWidth: "1200px", margin: "0 auto" }}>
       <h2 style={{ marginBottom: "1.5rem" }}>Start New Target Triage</h2>
 
       {/* Preset buttons */}
@@ -148,47 +177,235 @@ export default function TriageForm({ onTriageComplete }: TriageFormProps) {
       </div>
 
       <form onSubmit={handleSubmit}>
-        {/* Disease input */}
+        {/* Disease Search */}
         <div className="form-group">
-          <label className="form-label">Disease</label>
+          <label className="form-label">Step 1: Search for Disease</label>
           <div style={{ display: "flex", gap: "0.5rem" }}>
             <input
               type="text"
               className="form-input"
               placeholder="Enter disease name (e.g., Alzheimer's disease)"
-              value={diseaseName}
-              onChange={(e) => setDiseaseName(e.target.value)}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              disabled={selectedDisease !== null}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleDiseaseSearch();
+                }
+              }}
             />
             <button
               type="button"
               className="btn btn-secondary"
               onClick={handleDiseaseSearch}
+              disabled={isSearching || selectedDisease !== null}
             >
-              Search
+              {isSearching ? "Searching..." : "Search"}
             </button>
           </div>
-          {diseaseId && (
-            <p className="form-hint">Disease ID: {diseaseId}</p>
-          )}
         </div>
 
-        {/* Genes input */}
-        <div className="form-group">
-          <label className="form-label">Target Genes</label>
-          <textarea
-            className="form-textarea"
-            placeholder="Enter gene symbols, one per line or comma-separated:&#10;PNPLA3&#10;TM6SF2&#10;HSD17B13"
-            value={genesText}
-            onChange={(e) => setGenesText(e.target.value)}
-          />
-          <p className="form-hint">
-            {genesText
-              .split(/[\n,]/)
-              .map((g) => g.trim())
-              .filter((g) => g.length > 0).length}{" "}
-            genes entered
-          </p>
-        </div>
+        {/* Selected Disease Display */}
+        {selectedDisease && (
+          <div
+            className="card"
+            style={{
+              marginBottom: "1.5rem",
+              padding: "1rem",
+              background: "#dcfce7",
+              border: "2px solid #22c55e",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+              }}
+            >
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, marginBottom: "0.25rem" }}>
+                  ✅ Selected Disease
+                </div>
+                <div style={{ fontSize: "1.125rem", fontWeight: 700, marginBottom: "0.25rem" }}>
+                  {selectedDisease.name}
+                </div>
+                <div style={{ fontSize: "0.875rem", color: "#16a34a", marginBottom: "0.25rem" }}>
+                  <strong>ID:</strong> {selectedDisease.id}
+                </div>
+                {selectedDisease.description && (
+                  <div style={{ fontSize: "0.875rem", color: "#15803d" }}>
+                    {selectedDisease.description}
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleResetDisease}
+                style={{ marginLeft: "1rem" }}
+              >
+                Change
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Disease Options List */}
+        {diseaseOptions.length > 0 && !selectedDisease && (
+          <div style={{ marginBottom: "1.5rem" }}>
+            <div
+              style={{
+                fontWeight: 600,
+                marginBottom: "0.5rem",
+                color: "#64748b",
+              }}
+            >
+              Select a disease from the results below ({diseaseOptions.length} results):
+            </div>
+            <div
+              style={{
+                maxHeight: "400px",
+                overflowY: "auto",
+                border: "1px solid #e2e8f0",
+                borderRadius: "8px",
+                overflowX: "hidden",
+              }}
+            >
+              <table
+                style={{
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  tableLayout: "fixed",
+                }}
+              >
+                <thead
+                  style={{
+                    position: "sticky",
+                    top: 0,
+                    background: "#f8fafc",
+                    zIndex: 1,
+                  }}
+                >
+                  <tr style={{ borderBottom: "2px solid #e2e8f0" }}>
+                    <th
+                      style={{
+                        textAlign: "left",
+                        padding: "0.75rem 1rem",
+                        fontWeight: 600,
+                        fontSize: "0.875rem",
+                        color: "#475569",
+                        width: "25%",
+                      }}
+                    >
+                      Disease Name
+                    </th>
+                    <th
+                      style={{
+                        textAlign: "left",
+                        padding: "0.75rem 1rem",
+                        fontWeight: 600,
+                        fontSize: "0.875rem",
+                        color: "#475569",
+                        width: "15%",
+                      }}
+                    >
+                      Disease ID
+                    </th>
+                    <th
+                      style={{
+                        textAlign: "left",
+                        padding: "0.75rem 1rem",
+                        fontWeight: 600,
+                        fontSize: "0.875rem",
+                        color: "#475569",
+                        width: "60%",
+                      }}
+                    >
+                      Description
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {diseaseOptions.map((disease) => (
+                    <tr
+                      key={disease.id}
+                      onClick={() => handleDiseaseSelect(disease)}
+                      style={{
+                        cursor: "pointer",
+                        borderBottom: "1px solid #e2e8f0",
+                        transition: "background-color 0.15s",
+                      }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.backgroundColor = "#f1f5f9")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.backgroundColor = "transparent")
+                      }
+                    >
+                      <td
+                        style={{
+                          padding: "0.75rem 1rem",
+                          fontWeight: 600,
+                          fontSize: "0.9375rem",
+                          verticalAlign: "top",
+                          wordWrap: "break-word",
+                        }}
+                      >
+                        {disease.name}
+                      </td>
+                      <td
+                        style={{
+                          padding: "0.75rem 1rem",
+                          fontSize: "0.8125rem",
+                          color: "#3b82f6",
+                          fontFamily: "monospace",
+                          verticalAlign: "top",
+                          wordWrap: "break-word",
+                        }}
+                      >
+                        {disease.id}
+                      </td>
+                      <td
+                        style={{
+                          padding: "0.75rem 1rem",
+                          fontSize: "0.875rem",
+                          color: "#64748b",
+                          verticalAlign: "top",
+                          lineHeight: "1.5",
+                          wordWrap: "break-word",
+                        }}
+                      >
+                        {disease.description || "-"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Genes input - only show when disease is selected */}
+        {selectedDisease && (
+          <div className="form-group">
+            <label className="form-label">Step 2: Enter Target Genes</label>
+            <textarea
+              className="form-textarea"
+              placeholder="Enter gene symbols, one per line or comma-separated:&#10;PNPLA3&#10;TM6SF2&#10;HSD17B13"
+              value={genesText}
+              onChange={(e) => setGenesText(e.target.value)}
+            />
+            <p className="form-hint">
+              {genesText
+                .split(/[\n,]/)
+                .map((g) => g.trim())
+                .filter((g) => g.length > 0).length}{" "}
+              genes entered
+            </p>
+          </div>
+        )}
 
         {/* Error display */}
         {error && (
@@ -215,28 +432,30 @@ export default function TriageForm({ onTriageComplete }: TriageFormProps) {
               />
             </div>
             <div className="progress-text">
-              <span>Processing: {currentGene || "Starting..."}</span>
+              <span>Processing...</span>
               <span>{progress}%</span>
             </div>
           </div>
         )}
 
-        {/* Submit button */}
-        <button
-          type="submit"
-          className="btn btn-primary"
-          disabled={isRunning}
-          style={{ width: "100%" }}
-        >
-          {isRunning ? (
-            <>
-              <span className="spinner" style={{ width: "20px", height: "20px" }} />
-              Running Triage...
-            </>
-          ) : (
-            "Run Triage Analysis"
-          )}
-        </button>
+        {/* Submit button - only show when disease is selected */}
+        {selectedDisease && (
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={isRunning}
+            style={{ width: "100%" }}
+          >
+            {isRunning ? (
+              <>
+                <span className="spinner" style={{ width: "20px", height: "20px" }} />
+                Running Triage...
+              </>
+            ) : (
+              "Run Triage Analysis"
+            )}
+          </button>
+        )}
       </form>
     </div>
   );

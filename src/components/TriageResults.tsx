@@ -94,6 +94,9 @@ export default function TriageResults({ jobId }: TriageResultsProps) {
       {/* Header */}
       <div style={{ marginBottom: "1.5rem" }}>
         <h2>{job.diseaseName}</h2>
+        <p style={{ color: "#64748b", fontSize: "0.875rem", marginBottom: "0.5rem" }}>
+          Disease ID: {job.diseaseId}
+        </p>
         <p style={{ color: "#64748b" }}>
           {job.genes.length} targets analyzed •{" "}
           {job.status === "COMPLETED"
