@@ -72,7 +72,7 @@ export default function TriageForm({ onTriageComplete }: TriageFormProps) {
     });
     setGenesText(preset.genes.join("\n"));
     setDiseaseOptions([]);
-    setSearchQuery("");
+    setSearchQuery(preset.diseaseName);
   };
 
   const handleDiseaseSearch = async () => {
@@ -104,10 +104,7 @@ export default function TriageForm({ onTriageComplete }: TriageFormProps) {
 
   const handleResetDisease = () => {
     setSelectedDisease(null);
-    setSearchQuery("");
     setDiseaseOptions([]);
-    setManualDiseaseId("");
-    setManualDiseaseName("");
   };
 
   const handleManualDiseaseSubmit = () => {
