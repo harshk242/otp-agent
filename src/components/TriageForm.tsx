@@ -52,6 +52,8 @@ export default function TriageForm({ onTriageComplete }: TriageFormProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [diseaseOptions, setDiseaseOptions] = useState<DiseaseOption[]>([]);
   const [selectedDisease, setSelectedDisease] = useState<DiseaseOption | null>(null);
+  const [manualDiseaseId, setManualDiseaseId] = useState("");
+  const [manualDiseaseName, setManualDiseaseName] = useState("");
   const [genesText, setGenesText] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
@@ -104,6 +106,23 @@ export default function TriageForm({ onTriageComplete }: TriageFormProps) {
     setSelectedDisease(null);
     setSearchQuery("");
     setDiseaseOptions([]);
+    setManualDiseaseId("");
+    setManualDiseaseName("");
+  };
+
+  const handleManualDiseaseSubmit = () => {
+    if (!manualDiseaseId.trim()) {
+      setError("Please enter a disease ID.");
+      return;
+    }
+    setError(null);
+    setSelectedDisease({
+      id: manualDiseaseId.trim(),
+      name: manualDiseaseName.trim() || manualDiseaseId.trim(),
+      description: "",
+    });
+    setDiseaseOptions([]);
+    setSearchQuery("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -177,34 +196,122 @@ export default function TriageForm({ onTriageComplete }: TriageFormProps) {
       </div>
 
       <form onSubmit={handleSubmit}>
-        {/* Disease Search */}
-        <div className="form-group">
-          <label className="form-label">Step 1: Search for Disease</label>
-          <div style={{ display: "flex", gap: "0.5rem" }}>
-            <input
-              type="text"
-              className="form-input"
-              placeholder="Enter disease name (e.g., Alzheimer's disease)"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              disabled={selectedDisease !== null}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleDiseaseSearch();
-                }
+        {/* Disease Selection - Only show if no disease selected */}
+        {!selectedDisease && (
+          <div style={{ marginBottom: "1.5rem" }}>
+            <label className="form-label">Step 1: Select Disease</label>
+            
+            {/* Two options in a grid */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "1.5rem",
+                marginTop: "0.5rem",
               }}
-            />
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={handleDiseaseSearch}
-              disabled={isSearching || selectedDisease !== null}
             >
-              {isSearching ? "Searching..." : "Search"}
-            </button>
+              {/* Option 1: Search by name */}
+              <div
+                style={{
+                  padding: "1rem",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "8px",
+                  background: "#f8fafc",
+                }}
+              >
+                <div
+                  style={{
+                    fontWeight: 600,
+                    marginBottom: "0.75rem",
+                    color: "#334155",
+                  }}
+                >
+                  Option A: Search by Disease Name
+                </div>
+                <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g., Alzheimer's disease"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleDiseaseSearch();
+                      }
+                    }}
+                    style={{ flex: 1 }}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={handleDiseaseSearch}
+                    disabled={isSearching}
+                  >
+                    {isSearching ? "..." : "Search"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Option 2: Enter ID manually */}
+              <div
+                style={{
+                  padding: "1rem",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "8px",
+                  background: "#f8fafc",
+                }}
+              >
+                <div
+                  style={{
+                    fontWeight: 600,
+                    marginBottom: "0.75rem",
+                    color: "#334155",
+                  }}
+                >
+                  Option B: Enter Disease ID Manually
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Disease ID (e.g., EFO_0000249)"
+                    value={manualDiseaseId}
+                    onChange={(e) => setManualDiseaseId(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleManualDiseaseSubmit();
+                      }
+                    }}
+                  />
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Disease Name (optional, for display)"
+                    value={manualDiseaseName}
+                    onChange={(e) => setManualDiseaseName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleManualDiseaseSubmit();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={handleManualDiseaseSubmit}
+                    style={{ alignSelf: "flex-start" }}
+                  >
+                    Use This ID
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Selected Disease Display */}
         {selectedDisease && (
