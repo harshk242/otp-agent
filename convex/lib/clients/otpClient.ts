@@ -13,6 +13,7 @@ import {
   KnownDrug,
   DEFAULT_CONFIG,
 } from "../types";
+import { getGenePageUrlBySymbol } from "./clinpgxClient";
 
 // GraphQL Queries
 const TARGET_INFO_QUERY = `
@@ -111,6 +112,7 @@ const SAFETY_LIABILITIES_QUERY = `
   query SafetyLiabilities($ensemblId: String!) {
     target(ensemblId: $ensemblId) {
       id
+      approvedSymbol
       safetyLiabilities {
         event
         eventId
@@ -399,6 +401,7 @@ export const otpClient = {
     const data = await fetchGraphQL<{
       target: {
         id: string;
+        approvedSymbol: string;
         safetyLiabilities: Array<{
           event: string;
           eventId: string;
@@ -412,6 +415,12 @@ export const otpClient = {
     }>(SAFETY_LIABILITIES_QUERY, { ensemblId });
 
     if (!data.target) return [];
+
+    // Get ClinPGx URL for this gene (only called once per gene)
+    const geneSymbol = data.target.approvedSymbol;
+    const clinpgxUrl = geneSymbol
+      ? await getGenePageUrlBySymbol(geneSymbol)
+      : null;
 
     return data.target.safetyLiabilities.map((s) => {
       // Determine severity based on event type and effects
@@ -445,6 +454,10 @@ export const otpClient = {
         .filter(Boolean);
       const organSystem = organSystems[0];
 
+      // Use ClinPGx URL if datasource is ClinPGx and we have a valid URL
+      const evidenceUrl =
+        s.datasource === "ClinPGx" && clinpgxUrl ? clinpgxUrl : s.url || undefined;
+
       return {
         signalType: "target_safety",
         organSystem,
@@ -455,7 +468,7 @@ export const otpClient = {
             type: "REGULATORY" as const,
             source: s.datasource,
             description: `${s.event} - ${s.effects.map((e) => `${e.direction} ${e.dosing}`).join(", ")}`,
-            url: s.url || undefined,
+            url: evidenceUrl,
           },
         ],
       };

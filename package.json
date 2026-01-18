@@ -10,13 +10,16 @@
     "preview": "vite preview",
     "convex:deploy": "convex deploy",
     "lint": "eslint src convex --ext .ts,.tsx",
-    "test": "vitest"
+    "test": "vitest",
+    "migration:fix-clinpgx-urls": "node scripts/migrate-clinpgx-urls.js",
+    "migration:fix-clinpgx-urls:dry-run": "node scripts/migrate-clinpgx-urls.js --dry-run"
   },
   "dependencies": {
     "@auth/core": "0.37.4",
     "@convex-dev/auth": "^0.0.90",
     "axios": "^1.6.0",
     "convex": "^1.17.0",
+    "dotenv": "^16.3.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "zod": "^3.23.0"
